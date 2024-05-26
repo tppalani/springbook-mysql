@@ -22,4 +22,52 @@ services:
     environment:
       MYSQL_DATABASE: test
       MYSQL_ROOT_PASSWORD: root
-        
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-cm
+  namespace: argocd
+data:
+  config.yaml: |
+    templates:
+      - name: ms-teams
+        title: "Argo CD Application {{ .app.metadata.name }} {{ .status }} Notification"
+        body: |
+          {{ if eq .status "Healthy" }}
+            Application {{ .app.metadata.name }} is healthy.
+          {{ else if eq .status "Degraded" }}
+            Application {{ .app.metadata.name }} is degraded.
+          {{ else }}
+            Application {{ .app.metadata.name }} status is {{ .status }}.
+          {{ end }}
+        type: teams
+    context:
+      - key: app.status
+        value: '{{ .app.status.health.status }}'
+    subscriptions:
+      ms-teams: $webhookUrl
+
+  service.ms-teams: |
+    url: "<your_teams_webhook_url>"
+    headers:
+      Content-Type: application/
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-notifications-trigger-cm
+  namespace: argocd
+data:
+  triggers.yaml: |
+    triggers:
+      - name: on-sync-status-unknown
+        condition: app.status.sync == 'Unknown'
+        template: ms-teams
+      - name: on-sync-failed
+        condition: app.status.sync == 'OutOfSync'
+        template: ms-teams
+      - name: on-health-degraded
+        condition: app.status.health == 'Degraded'
+        template: ms-teams
+---
