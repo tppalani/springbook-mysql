@@ -71,3 +71,4 @@ data:
         condition: app.status.health == 'Degraded'
         template: ms-teams
 ---
+https://github.com/argoproj/argo-cd/issues/18423
