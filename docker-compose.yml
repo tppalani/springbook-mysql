@@ -72,3 +72,24 @@ data:
         template: ms-teams
 ---
 https://github.com/argoproj/argo-cd/issues/18423
+Ok I forgot to add the triggers lol:
+notifications:
+  enabled: true
+  notifiers:
+    service.teams: |
+      recipientUrls:
+        ms-test: https://webhook-url
+  subscriptions:
+    - recipients:
+        - teams:ms-test
+      triggers:
+        - on-sync-succeeded
+        - on-sync-failed
+  triggers:
+    trigger.on-sync-succeeded: |
+      - description: Application syncing has succeeded
+        send:
+        - app-sync-succeeded
+        when: app.status.operationState.phase in ['Succeeded']
+    trigger.on-sync-failed: |
+    ...
